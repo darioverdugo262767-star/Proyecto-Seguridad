@@ -5,11 +5,16 @@ package dto;
  * @author Dario
  */
 public class UsuarioDTO {
-     private Long id;
+    private Long id;
     private String Nombre;
     private String contrasenia;
     private Rol rol;
 
+    public UsuarioDTO(String Nombre, String contrasenia, Rol rol) {
+        this.Nombre = Nombre;
+        this.contrasenia = contrasenia;
+        this.rol = rol;
+    }
     public UsuarioDTO(Long id, String Nombre, String contrasenia, Rol rol) {
         this.id = id;
         this.Nombre = Nombre;
