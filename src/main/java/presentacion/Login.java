@@ -3,11 +3,16 @@
  * Click nbfs://nbhost/SystemFileSystem/Templates/GUIForms/JFrame.java to edit this template
  */
 package presentacion;
+
 import dto.UsuarioDTO;
 import java.awt.HeadlessException;
 import javax.swing.JOptionPane;
 import java.security.NoSuchAlgorithmException;
 import daoMock.UsuarioDAOMock;
+import java.io.IOException;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+
 
 /**
  *
@@ -15,15 +20,15 @@ import daoMock.UsuarioDAOMock;
  */
 public class Login extends javax.swing.JFrame {
 
-   private UsuarioDAOMock usuarioDAO;
+    private UsuarioDAOMock usuarioDAO;
 
     /**
      * Creates new form Login
      */
     public Login(UsuarioDAOMock usuarioDAO) {
-         initComponents();
-         this.usuarioDAO = usuarioDAO;
-       
+        initComponents();
+        this.usuarioDAO = usuarioDAO;
+
     }
 
     /**
@@ -154,10 +159,13 @@ public class Login extends javax.swing.JFrame {
             }
         } catch (HeadlessException | NoSuchAlgorithmException e) {
             JOptionPane.showMessageDialog(this, e.getMessage());
+        } catch (IOException ex) {
+            Logger.getLogger(Login.class.getName()).log(Level.SEVERE, null, ex);
         }
     }//GEN-LAST:event_jButton1ActionPerformed
 
     private void btnRegistroActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnRegistroActionPerformed
+
         new RegistroUsuario(usuarioDAO).setVisible(true);
         this.dispose();
     }//GEN-LAST:event_btnRegistroActionPerformed
@@ -166,7 +174,7 @@ public class Login extends javax.swing.JFrame {
      * @param args the command line arguments
      */
     public static void main(String args[]) {
-     
+
     }
 
     // Variables declaration - do not modify//GEN-BEGIN:variables

@@ -5,15 +5,26 @@
 package presentacion;
 
 import daoMock.UsuarioDAOMock;
+import java.io.BufferedReader;
+import java.io.BufferedWriter;
+import java.io.File;
+import java.io.FileReader;
+import java.io.FileWriter;
+import java.io.IOException;
 import java.security.NoSuchAlgorithmException;
+import java.util.logging.Logger;
 import javax.swing.JOptionPane;
+import presentacion.Login;
+import validador.LoginValidacion;
 
 /**
  *
  * @author Jazmin
  */
+
 public class RegistroUsuario extends javax.swing.JFrame {
 
+    private static final Logger LOG = Logger.getLogger(RegistroUsuario.class.getName());
     private UsuarioDAOMock usuarioDAO;
 
     /**
@@ -108,21 +119,39 @@ public class RegistroUsuario extends javax.swing.JFrame {
     }// </editor-fold>//GEN-END:initComponents
 
     private void jButton1ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton1ActionPerformed
+
         String nombre = jTextField1.getText();
         String contra = new String(jPasswordField1.getPassword());
 
         try {
             String error = usuarioDAO.registrarUsuario(nombre, contra);
+
             if (error != null) {
                 JOptionPane.showMessageDialog(this, error);
-            } else {
-                JOptionPane.showMessageDialog(this, "Usuario registrado con éxito");
-                new Login(usuarioDAO).setVisible(true);
-                this.dispose();
+                return;
             }
-        } catch (NoSuchAlgorithmException e) {
+
+            File archivo = new File("usuarios.txt");
+
+            if (!archivo.exists()) {
+                archivo.createNewFile();
+            }
+
+            BufferedWriter bw = new BufferedWriter(new FileWriter(archivo, true));
+
+            bw.write(nombre + "," + LoginValidacion.hashear(contra));
+            bw.newLine();
+            bw.close();
+
+            JOptionPane.showMessageDialog(this, "Usuario registrado con éxito");
+
+            new Login(usuarioDAO).setVisible(true);
+            this.dispose();
+
+        } catch (Exception e) {
             JOptionPane.showMessageDialog(this, e.getMessage());
         }
+    
     }//GEN-LAST:event_jButton1ActionPerformed
 
     /**
@@ -130,7 +159,7 @@ public class RegistroUsuario extends javax.swing.JFrame {
      */
     public static void main(String args[]) {
 
-    }
+}
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JButton jButton1;

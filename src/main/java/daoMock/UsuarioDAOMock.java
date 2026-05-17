@@ -2,6 +2,9 @@ package daoMock;
 
 import dto.Rol;
 import dto.UsuarioDTO;
+import java.io.BufferedReader;
+import java.io.FileReader;
+import java.io.IOException;
 import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
 import java.util.List;
@@ -20,13 +23,27 @@ public class UsuarioDAOMock {
 
     }
 
-    public UsuarioDTO validarUsuario(String nombre, String contrasenia) throws NoSuchAlgorithmException {
-        String contraseniaHash = LoginValidacion.hashear(contrasenia);
-        for (UsuarioDTO u : usuarios) {
-            if (u.getNombre().equals(nombre) && u.getContrasenia().equals(contraseniaHash)) {
-                return u;
+    public UsuarioDTO validarUsuario(String nombre, String contrasenia) throws NoSuchAlgorithmException, IOException {
+        BufferedReader br = new BufferedReader(new FileReader("usuarios.txt"));
+
+        String linea;
+
+        while ((linea = br.readLine()) != null) {
+
+            String[] datos = linea.split(",");
+
+            String usuario = datos[0].trim();
+            String pass = datos[1].trim();
+
+            if (usuario.equals(nombre.trim())
+                    && pass.equals(contrasenia.trim())) {
+
+                br.close();
+                return new UsuarioDTO(usuario, pass, Rol.USUARIO);
             }
         }
+
+        br.close();
         return null;
     }
 
@@ -49,11 +66,11 @@ public class UsuarioDAOMock {
             if (usuario.getNombre().equals(nombre)) {
                 return "Este nombre de usuario ya está registrado";
             }
-            
+
         }
         String hash = LoginValidacion.hashear(contrasena);
-            usuarios.add(new UsuarioDTO(nombre, hash, Rol.USUARIO));
-            return null;
+        usuarios.add(new UsuarioDTO(nombre, hash, Rol.USUARIO));
+        return null;
     }
-   
+
 }
