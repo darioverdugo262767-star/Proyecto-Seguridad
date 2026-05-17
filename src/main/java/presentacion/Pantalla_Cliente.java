@@ -1,5 +1,9 @@
 package presentacion;
 
+import bo.ChatBO;
+import dto.UsuarioDTO;
+import javax.swing.JOptionPane;
+
 /*
  * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
  * Click nbfs://nbhost/SystemFileSystem/Templates/GUIForms/JFrame.java to edit this template
@@ -10,12 +14,44 @@ package presentacion;
  * @author Ixchel
  */
 public class Pantalla_Cliente extends javax.swing.JFrame {
-
+    
+    private UsuarioDTO usuarioLogueado;
+    private ChatBO chatBO;
+    
     /**
      * Creates new form Pantalla_Clientea
      */
-    public Pantalla_Cliente() {
+    public Pantalla_Cliente(UsuarioDTO usuario) {
         initComponents();
+        this.usuarioLogueado = usuario;
+        this.chatBO = new ChatBO();
+        jLabel2.setText("Estado: Conectado");
+        jLabel2.setForeground(new java.awt.Color(0, 153, 51));
+        jLabel6.setText("Conectado al servidor: " + usuario.getNombre());
+        jTextField2.setForeground(java.awt.Color.BLACK); 
+        jTextField2.setText("");
+
+        try {
+            red.ConexionSocket conexion = red.ConexionSocket.getInstancia();
+
+            dto.MensajeDTO mensajeRegistro = new dto.MensajeDTO(
+                "Se ha unido al chat", 
+                usuario, 
+                java.time.LocalDateTime.now(), 
+                dto.Tipo.PUBLICO
+            );
+
+            String jsonRegistro = mappers.MensajeMapper.toPythonJson(mensajeRegistro, "ALL") + "\n";
+
+            conexion.enviarMensaje(jsonRegistro);
+
+        } catch (Exception e) {
+        }
+
+        configurarHiloEscucha();
+
+        this.revalidate();
+        this.repaint();
     }
 
     /**
@@ -35,8 +71,6 @@ public class Pantalla_Cliente extends javax.swing.JFrame {
         jTextField2 = new javax.swing.JTextField();
         jButton1 = new javax.swing.JButton();
         jSeparator1 = new javax.swing.JSeparator();
-        jLabel4 = new javax.swing.JLabel();
-        jLabel5 = new javax.swing.JLabel();
         jLabel6 = new javax.swing.JLabel();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
@@ -48,11 +82,12 @@ public class Pantalla_Cliente extends javax.swing.JFrame {
         jLabel1.setText("CLIENTE");
 
         jLabel2.setFont(new java.awt.Font("Segoe UI", 0, 14)); // NOI18N
-        jLabel2.setText("Estado:");
+        jLabel2.setText("Estado: Conectado");
 
         jLabel3.setFont(new java.awt.Font("Segoe UI", 1, 12)); // NOI18N
         jLabel3.setText("Mensajes");
 
+        jTextArea1.setEditable(false);
         jTextArea1.setColumns(20);
         jTextArea1.setRows(5);
         jScrollPane1.setViewportView(jTextArea1);
@@ -60,6 +95,11 @@ public class Pantalla_Cliente extends javax.swing.JFrame {
         jTextField2.setForeground(new java.awt.Color(204, 204, 204));
         jTextField2.setText("Escribe tu mensaje...");
         jTextField2.setBorder(new javax.swing.border.LineBorder(new java.awt.Color(0, 0, 204), 1, true));
+        jTextField2.addFocusListener(new java.awt.event.FocusAdapter() {
+            public void focusGained(java.awt.event.FocusEvent evt) {
+                jTextField2FocusGained(evt);
+            }
+        });
         jTextField2.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 jTextField2ActionPerformed(evt);
@@ -77,35 +117,27 @@ public class Pantalla_Cliente extends javax.swing.JFrame {
             }
         });
 
-        jLabel4.setText("conectado al servidor en localHost:");
-
-        jLabel5.setForeground(new java.awt.Color(204, 0, 0));
-        jLabel5.setText("Desconectado");
-
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
         getContentPane().setLayout(layout);
         layout.setHorizontalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addComponent(jSeparator1)
             .addGroup(layout.createSequentialGroup()
-                .addContainerGap()
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
-                        .addComponent(jLabel3)
-                        .addComponent(jLabel1, javax.swing.GroupLayout.PREFERRED_SIZE, 91, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addGroup(layout.createSequentialGroup()
+                    .addGroup(layout.createSequentialGroup()
+                        .addContainerGap()
+                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
+                            .addComponent(jLabel3)
+                            .addComponent(jLabel1, javax.swing.GroupLayout.PREFERRED_SIZE, 91, javax.swing.GroupLayout.PREFERRED_SIZE)
                             .addComponent(jLabel2)
-                            .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                            .addComponent(jLabel5))
-                        .addGroup(layout.createSequentialGroup()
-                            .addComponent(jTextField2, javax.swing.GroupLayout.PREFERRED_SIZE, 259, javax.swing.GroupLayout.PREFERRED_SIZE)
-                            .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                            .addComponent(jButton1, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
-                        .addGroup(layout.createSequentialGroup()
-                            .addGap(197, 197, 197)
-                            .addComponent(jLabel6))
-                        .addComponent(jScrollPane1, javax.swing.GroupLayout.PREFERRED_SIZE, 346, javax.swing.GroupLayout.PREFERRED_SIZE))
-                    .addComponent(jLabel4))
+                            .addGroup(layout.createSequentialGroup()
+                                .addComponent(jTextField2, javax.swing.GroupLayout.PREFERRED_SIZE, 259, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                .addComponent(jButton1, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                            .addComponent(jScrollPane1, javax.swing.GroupLayout.PREFERRED_SIZE, 346, javax.swing.GroupLayout.PREFERRED_SIZE)))
+                    .addGroup(layout.createSequentialGroup()
+                        .addGap(14, 14, 14)
+                        .addComponent(jLabel6, javax.swing.GroupLayout.PREFERRED_SIZE, 189, javax.swing.GroupLayout.PREFERRED_SIZE)))
                 .addContainerGap(15, Short.MAX_VALUE))
         );
         layout.setVerticalGroup(
@@ -114,9 +146,7 @@ public class Pantalla_Cliente extends javax.swing.JFrame {
                 .addContainerGap()
                 .addComponent(jLabel1, javax.swing.GroupLayout.PREFERRED_SIZE, 31, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(jLabel2)
-                    .addComponent(jLabel5))
+                .addComponent(jLabel2)
                 .addGap(18, 18, 18)
                 .addComponent(jLabel3)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
@@ -128,10 +158,8 @@ public class Pantalla_Cliente extends javax.swing.JFrame {
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 21, Short.MAX_VALUE)
                 .addComponent(jSeparator1, javax.swing.GroupLayout.PREFERRED_SIZE, 10, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(jLabel6)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(jLabel4)
-                .addGap(38, 38, 38))
+                .addComponent(jLabel6, javax.swing.GroupLayout.PREFERRED_SIZE, 23, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addGap(37, 37, 37))
         );
 
         pack();
@@ -142,42 +170,100 @@ public class Pantalla_Cliente extends javax.swing.JFrame {
     }//GEN-LAST:event_jTextField2ActionPerformed
 
     private void jButton1ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton1ActionPerformed
-        // TODO add your handling code here:
+        String textoOriginal = jTextField2.getText().trim();
+    
+        if (textoOriginal.isEmpty() || textoOriginal.equals("Escribe tu mensaje...")) {
+            return;
+        }
+
+        String destino = "ALL";
+        String textoFiltrado = textoOriginal;
+        dto.Tipo tipoMensaje = dto.Tipo.PUBLICO;
+
+        if (textoOriginal.startsWith("/priv ")) {
+            try {
+                String[] partes = textoOriginal.split(" ", 3); 
+
+                if (partes.length >= 3) {
+                    destino = partes[1]; 
+                    textoFiltrado = partes[2]; 
+                    tipoMensaje = dto.Tipo.PRIVADO;
+                } else {
+                    JOptionPane.showMessageDialog(this, "Formato incorrecto. Usa: /priv NombreUsuario Mensaje", "Error de comando", JOptionPane.ERROR_MESSAGE);
+                    return;
+                }
+            } catch (Exception e) {
+                System.err.println("Error procesando comando privado: " + e.getMessage());
+            }
+        }
+
+        try {
+            dto.MensajeDTO mensajeDto = new dto.MensajeDTO(
+                textoFiltrado, 
+                this.usuarioLogueado, 
+                java.time.LocalDateTime.now(), 
+                tipoMensaje
+            );
+
+            this.chatBO.procesarYEnviarMensaje(mensajeDto, destino);
+
+            if (tipoMensaje == dto.Tipo.PRIVADO) {
+                jTextArea1.append("[Privado para " + destino + "]: " + textoFiltrado + "\n");
+            }
+
+            jTextField2.setText("");
+        } catch (Exception e) {
+            JOptionPane.showMessageDialog(this, "Error al enviar: " + e.getMessage());
+        }
     }//GEN-LAST:event_jButton1ActionPerformed
 
-    /**
-     * @param args the command line arguments
-     */
-    public static void main(String args[]) {
-        /* Set the Nimbus look and feel */
-        //<editor-fold defaultstate="collapsed" desc=" Look and feel setting code (optional) ">
-        /* If Nimbus (introduced in Java SE 6) is not available, stay with the default look and feel.
-         * For details see http://download.oracle.com/javase/tutorial/uiswing/lookandfeel/plaf.html 
-         */
-        try {
-            for (javax.swing.UIManager.LookAndFeelInfo info : javax.swing.UIManager.getInstalledLookAndFeels()) {
-                if ("Nimbus".equals(info.getName())) {
-                    javax.swing.UIManager.setLookAndFeel(info.getClassName());
-                    break;
-                }
-            }
-        } catch (ClassNotFoundException ex) {
-            java.util.logging.Logger.getLogger(Pantalla_Cliente.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
-        } catch (InstantiationException ex) {
-            java.util.logging.Logger.getLogger(Pantalla_Cliente.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
-        } catch (IllegalAccessException ex) {
-            java.util.logging.Logger.getLogger(Pantalla_Cliente.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
-        } catch (javax.swing.UnsupportedLookAndFeelException ex) {
-            java.util.logging.Logger.getLogger(Pantalla_Cliente.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
+    private void jTextField2FocusGained(java.awt.event.FocusEvent evt) {//GEN-FIRST:event_jTextField2FocusGained
+        if (jTextField2.getText().equals("Escribe tu mensaje...")) {
+            jTextField2.setText("");
+            jTextField2.setForeground(java.awt.Color.BLACK);
         }
-        //</editor-fold>
+    }//GEN-LAST:event_jTextField2FocusGained
 
-        /* Create and display the form */
-        java.awt.EventQueue.invokeLater(new Runnable() {
-            public void run() {
-                new Pantalla_Cliente().setVisible(true);
+    private void configurarHiloEscucha() {
+        Thread hilo = new Thread(() -> {
+            red.ConexionSocket conexion = red.ConexionSocket.getInstancia();
+            try {
+                while (true) {
+                    String jsonRecibido = conexion.recibirMensaje();
+                    if (jsonRecibido == null) {
+                        break; 
+                    }
+                    try {
+                        dto.MensajeDTO mensaje = mappers.MensajeMapper.toMensajeDTO(jsonRecibido);
+
+                        if (mensaje != null) {
+                            String emisor = mensaje.getEmisor().getNombre();
+                            String contenido = mensaje.getContenido();
+
+                            if (mensaje.getTipo() == dto.Tipo.PRIVADO) {
+                                javax.swing.SwingUtilities.invokeLater(() -> {
+                                    jTextArea1.append("[Privado de " + emisor + "]: " + contenido + "\n");
+                                });
+                            } else {
+                                javax.swing.SwingUtilities.invokeLater(() -> {
+                                    jTextArea1.append("[" + emisor + "]: " + contenido + "\n");
+                                });
+                            }
+                        }
+                    } catch (Exception mapperEx) {
+                        javax.swing.SwingUtilities.invokeLater(() -> {
+                            jTextArea1.append("[Raw]: " + jsonRecibido + "\n");
+                        });
+                    }
+                }
+            } catch (Exception e) {
+                javax.swing.SwingUtilities.invokeLater(() -> {
+                    jTextArea1.append("Conexión perdida con el servidor.\n");
+                });
             }
         });
+        hilo.setDaemon(true); 
+        hilo.start();
     }
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
@@ -185,8 +271,6 @@ public class Pantalla_Cliente extends javax.swing.JFrame {
     private javax.swing.JLabel jLabel1;
     private javax.swing.JLabel jLabel2;
     private javax.swing.JLabel jLabel3;
-    private javax.swing.JLabel jLabel4;
-    private javax.swing.JLabel jLabel5;
     private javax.swing.JLabel jLabel6;
     private javax.swing.JScrollPane jScrollPane1;
     private javax.swing.JSeparator jSeparator1;

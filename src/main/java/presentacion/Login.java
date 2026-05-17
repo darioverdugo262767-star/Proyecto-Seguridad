@@ -154,8 +154,19 @@ public class Login extends javax.swing.JFrame {
             if (usuario == null) {
                 JOptionPane.showMessageDialog(this, "Nombre de usuario o contraseña incorrectos");
             } else {
-                new Pantalla_Cliente().setVisible(true);
-                this.dispose();
+                red.ConexionSocket conexion = red.ConexionSocket.getInstancia();
+                boolean conectadoARed = conexion.conectar("127.0.0.1", 9009, usuario.getNombre());
+                
+                if (conectadoARed) {
+                    new Pantalla_Cliente(usuario).setVisible(true);
+                    this.dispose();
+                } else {
+                    JOptionPane.showMessageDialog(this, 
+                        "Éxito local, pero no se pudo conectar al servidor de chat de Python.\n" +
+                        "Verifica que el servidor esté encendido o que el usuario no esté repetido.", 
+                        "Error de Red", 
+                        JOptionPane.ERROR_MESSAGE);
+                }
             }
         } catch (HeadlessException | NoSuchAlgorithmException e) {
             JOptionPane.showMessageDialog(this, e.getMessage());
@@ -175,6 +186,12 @@ public class Login extends javax.swing.JFrame {
      */
     public static void main(String args[]) {
 
+     java.awt.EventQueue.invokeLater(new Runnable() {
+            public void run() {
+                UsuarioDAOMock dao = new UsuarioDAOMock();
+                new Login(dao).setVisible(true);
+            }
+        });
     }
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
