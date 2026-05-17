@@ -17,7 +17,7 @@ import java.util.logging.Logger;
 public class LoginValidacion {
 
     private static final Logger LOG = Logger.getLogger(LoginValidacion.class.getName());
-   
+    
     /**
      * Valida que el nombre de usuario y la contraseña cumplan con los requisitos mínimos.
      * @param nombre nombre a validar 

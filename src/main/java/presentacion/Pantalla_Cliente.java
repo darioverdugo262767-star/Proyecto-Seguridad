@@ -1,9 +1,13 @@
 package presentacion;
 
 import bo.ChatBO;
+import daoMock.UsuarioDAOMock;
 import dto.UsuarioDTO;
 import javax.swing.JOptionPane;
+import java.time.format.DateTimeFormatter;
 
+import java.util.logging.Level;
+import java.util.logging.Logger;
 /*
  * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
  * Click nbfs://nbhost/SystemFileSystem/Templates/GUIForms/JFrame.java to edit this template
@@ -14,16 +18,18 @@ import javax.swing.JOptionPane;
  * @author Ixchel
  */
 public class Pantalla_Cliente extends javax.swing.JFrame {
-    
+    private static final Logger logger = Logger.getLogger(Pantalla_Cliente.class.getName());
     private UsuarioDTO usuarioLogueado;
     private ChatBO chatBO;
+    private UsuarioDAOMock usuarioDAO;
     
     /**
      * Creates new form Pantalla_Clientea
      */
-    public Pantalla_Cliente(UsuarioDTO usuario) {
+    public Pantalla_Cliente(UsuarioDTO usuario, UsuarioDAOMock usuarioDAO) {
         initComponents();
         this.usuarioLogueado = usuario;
+        this.usuarioDAO = usuarioDAO;
         this.chatBO = new ChatBO();
         jLabel2.setText("Estado: Conectado");
         jLabel2.setForeground(new java.awt.Color(0, 153, 51));
@@ -63,6 +69,7 @@ public class Pantalla_Cliente extends javax.swing.JFrame {
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
     private void initComponents() {
 
+        jButton2 = new javax.swing.JButton();
         jLabel1 = new javax.swing.JLabel();
         jLabel2 = new javax.swing.JLabel();
         jLabel3 = new javax.swing.JLabel();
@@ -72,6 +79,12 @@ public class Pantalla_Cliente extends javax.swing.JFrame {
         jButton1 = new javax.swing.JButton();
         jSeparator1 = new javax.swing.JSeparator();
         jLabel6 = new javax.swing.JLabel();
+        jButton3 = new javax.swing.JButton();
+
+        jButton2.setBackground(new java.awt.Color(0, 0, 255));
+        jButton2.setFont(new java.awt.Font("Segoe UI", 1, 12)); // NOI18N
+        jButton2.setForeground(new java.awt.Color(255, 255, 255));
+        jButton2.setText("Volver");
 
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
         setTitle("Cliente - Chat");
@@ -117,6 +130,18 @@ public class Pantalla_Cliente extends javax.swing.JFrame {
             }
         });
 
+        jButton3.setBackground(new java.awt.Color(0, 51, 204));
+        jButton3.setFont(new java.awt.Font("Segoe UI", 1, 12)); // NOI18N
+        jButton3.setForeground(new java.awt.Color(255, 255, 255));
+        jButton3.setText("Volver");
+        jButton3.setActionCommand("Volver");
+        jButton3.setBorder(javax.swing.BorderFactory.createEtchedBorder());
+        jButton3.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                jButton3ActionPerformed(evt);
+            }
+        });
+
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
         getContentPane().setLayout(layout);
         layout.setHorizontalGroup(
@@ -137,7 +162,9 @@ public class Pantalla_Cliente extends javax.swing.JFrame {
                             .addComponent(jScrollPane1, javax.swing.GroupLayout.PREFERRED_SIZE, 346, javax.swing.GroupLayout.PREFERRED_SIZE)))
                     .addGroup(layout.createSequentialGroup()
                         .addGap(14, 14, 14)
-                        .addComponent(jLabel6, javax.swing.GroupLayout.PREFERRED_SIZE, 189, javax.swing.GroupLayout.PREFERRED_SIZE)))
+                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                            .addComponent(jLabel6, javax.swing.GroupLayout.PREFERRED_SIZE, 189, javax.swing.GroupLayout.PREFERRED_SIZE)
+                            .addComponent(jButton3, javax.swing.GroupLayout.PREFERRED_SIZE, 73, javax.swing.GroupLayout.PREFERRED_SIZE))))
                 .addContainerGap(15, Short.MAX_VALUE))
         );
         layout.setVerticalGroup(
@@ -155,11 +182,13 @@ public class Pantalla_Cliente extends javax.swing.JFrame {
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(jTextField2, javax.swing.GroupLayout.PREFERRED_SIZE, 26, javax.swing.GroupLayout.PREFERRED_SIZE)
                     .addComponent(jButton1, javax.swing.GroupLayout.PREFERRED_SIZE, 26, javax.swing.GroupLayout.PREFERRED_SIZE))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 21, Short.MAX_VALUE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 10, Short.MAX_VALUE)
                 .addComponent(jSeparator1, javax.swing.GroupLayout.PREFERRED_SIZE, 10, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(jLabel6, javax.swing.GroupLayout.PREFERRED_SIZE, 23, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addGap(37, 37, 37))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(jButton3, javax.swing.GroupLayout.PREFERRED_SIZE, 26, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addGap(16, 16, 16))
         );
 
         pack();
@@ -208,7 +237,8 @@ public class Pantalla_Cliente extends javax.swing.JFrame {
             this.chatBO.procesarYEnviarMensaje(mensajeDto, destino);
 
             if (tipoMensaje == dto.Tipo.PRIVADO) {
-                jTextArea1.append("[Privado para " + destino + "]: " + textoFiltrado + "\n");
+                String horaActual = java.time.LocalDateTime.now().format(DateTimeFormatter.ofPattern("HH:mm:ss"));
+                jTextArea1.append("[" + horaActual + "] [Privado para " + destino + "]: " + textoFiltrado + "\n");
             }
 
             jTextField2.setText("");
@@ -224,31 +254,60 @@ public class Pantalla_Cliente extends javax.swing.JFrame {
         }
     }//GEN-LAST:event_jTextField2FocusGained
 
+    private void jButton3ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton3ActionPerformed
+        new Login(usuarioDAO).setVisible(true);
+        this.dispose();
+    }//GEN-LAST:event_jButton3ActionPerformed
+
     private void configurarHiloEscucha() {
         Thread hilo = new Thread(() -> {
             red.ConexionSocket conexion = red.ConexionSocket.getInstancia();
+            java.time.format.DateTimeFormatter formateadorCorto = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm:ss");
             try {
                 while (true) {
                     String jsonRecibido = conexion.recibirMensaje();
+                    
                     if (jsonRecibido == null) {
                         break; 
                     }
+                    System.out.println("DEBUG CHAT - PROCESANDO: " + jsonRecibido);
                     try {
                         dto.MensajeDTO mensaje = mappers.MensajeMapper.toMensajeDTO(jsonRecibido);
 
                         if (mensaje != null) {
                             String emisor = mensaje.getEmisor().getNombre();
                             String contenido = mensaje.getContenido();
-
-                            if (mensaje.getTipo() == dto.Tipo.PRIVADO) {
-                                javax.swing.SwingUtilities.invokeLater(() -> {
-                                    jTextArea1.append("[Privado de " + emisor + "]: " + contenido + "\n");
-                                });
+                            
+                            // Extraemos la hora
+                            String horaFechaFormateada = "";
+                            if (mensaje.getFecha() != null) {
+                                horaFechaFormateada = "[" + mensaje.getFecha().format(formateadorCorto) + "] ";
                             } else {
-                                javax.swing.SwingUtilities.invokeLater(() -> {
-                                    jTextArea1.append("[" + emisor + "]: " + contenido + "\n");
-                                });
+                                int indiceTimestamp = jsonRecibido.indexOf("\"timestamp\"");
+                                if (indiceTimestamp != -1) {
+                                    int inicioHora = jsonRecibido.indexOf(":", indiceTimestamp) + 14; 
+                                    int finHora = inicioHora + 8;
+                                    if (finHora <= jsonRecibido.length()) {
+                                        horaFechaFormateada = "[" + jsonRecibido.substring(inicioHora, finHora) + "] ";
+                                    }
+                                }
                             }
+                            
+                            // CREAMOS LA LÍNEA DE TEXTO FINAL DEPENDIENDO DEL TIPO
+                            final String prefijoHora = horaFechaFormateada;
+                            final String textoAImprimir;
+                            
+                            if (mensaje.getTipo() == dto.Tipo.PRIVADO) {
+                                textoAImprimir = prefijoHora + "[Privado de " + emisor + "]: " + contenido + "\n";
+                            } else {
+                                // ¡Para el chat público también concatenamos el prefijo de la hora obligatoriamente!
+                                textoAImprimir = prefijoHora + "[" + emisor + "]: " + contenido + "\n";
+                            }
+                            
+                            // Una sola llamada limpia para pintar en la pantalla
+                            javax.swing.SwingUtilities.invokeLater(() -> {
+                                jTextArea1.append(textoAImprimir);
+                            });
                         }
                     } catch (Exception mapperEx) {
                         javax.swing.SwingUtilities.invokeLater(() -> {
@@ -268,6 +327,8 @@ public class Pantalla_Cliente extends javax.swing.JFrame {
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JButton jButton1;
+    private javax.swing.JButton jButton2;
+    private javax.swing.JButton jButton3;
     private javax.swing.JLabel jLabel1;
     private javax.swing.JLabel jLabel2;
     private javax.swing.JLabel jLabel3;

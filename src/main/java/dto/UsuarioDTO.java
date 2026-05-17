@@ -56,4 +56,11 @@ public class UsuarioDTO {
     }
     
     //Hash y toString por hacer si son necesarios.
+
+    @Override
+    public String toString() {
+        return "UsuarioDTO{" + "id=" + id + ", Nombre=" + Nombre + ", contrasenia=" + contrasenia + ", rol=" + rol + '}';
+    }
+    
+    
 }

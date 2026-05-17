@@ -1,7 +1,7 @@
 import json
 from datetime import datetime
 
-MAX_CLIENTS = 6
+MAX_CLIENTS = 5
 
 def timestamp():
     return datetime.now().strftime("%d/%m/%Y %H:%M:%S")

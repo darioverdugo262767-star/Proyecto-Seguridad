@@ -158,7 +158,7 @@ public class Login extends javax.swing.JFrame {
                 boolean conectadoARed = conexion.conectar("127.0.0.1", 9009, usuario.getNombre());
                 
                 if (conectadoARed) {
-                    new Pantalla_Cliente(usuario).setVisible(true);
+                    new Pantalla_Cliente(usuario, this.usuarioDAO).setVisible(true);
                     this.dispose();
                 } else {
                     JOptionPane.showMessageDialog(this, 
@@ -170,8 +170,6 @@ public class Login extends javax.swing.JFrame {
             }
         } catch (HeadlessException | NoSuchAlgorithmException e) {
             JOptionPane.showMessageDialog(this, e.getMessage());
-        } catch (IOException ex) {
-            Logger.getLogger(Login.class.getName()).log(Level.SEVERE, null, ex);
         }
     }//GEN-LAST:event_jButton1ActionPerformed
 
