@@ -170,27 +170,48 @@ public class Pantalla_Cliente extends javax.swing.JFrame {
     }//GEN-LAST:event_jTextField2ActionPerformed
 
     private void jButton1ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton1ActionPerformed
-        String textoMensaje = jTextField2.getText().trim();
-
-        if (textoMensaje.isEmpty() || textoMensaje.equals("Escribe tu mensaje...")) {
+        String textoOriginal = jTextField2.getText().trim();
+    
+        if (textoOriginal.isEmpty() || textoOriginal.equals("Escribe tu mensaje...")) {
             return;
+        }
+
+        String destino = "ALL";
+        String textoFiltrado = textoOriginal;
+        dto.Tipo tipoMensaje = dto.Tipo.PUBLICO;
+
+        if (textoOriginal.startsWith("/priv ")) {
+            try {
+                String[] partes = textoOriginal.split(" ", 3); 
+
+                if (partes.length >= 3) {
+                    destino = partes[1]; 
+                    textoFiltrado = partes[2]; 
+                    tipoMensaje = dto.Tipo.PRIVADO;
+                } else {
+                    JOptionPane.showMessageDialog(this, "Formato incorrecto. Usa: /priv NombreUsuario Mensaje", "Error de comando", JOptionPane.ERROR_MESSAGE);
+                    return;
+                }
+            } catch (Exception e) {
+                System.err.println("Error procesando comando privado: " + e.getMessage());
+            }
         }
 
         try {
             dto.MensajeDTO mensajeDto = new dto.MensajeDTO(
-                textoMensaje, 
+                textoFiltrado, 
                 this.usuarioLogueado, 
                 java.time.LocalDateTime.now(), 
-                dto.Tipo.PUBLICO
+                tipoMensaje
             );
 
-            this.chatBO.procesarYEnviarMensaje(mensajeDto, "ALL");
+            this.chatBO.procesarYEnviarMensaje(mensajeDto, destino);
+
+            if (tipoMensaje == dto.Tipo.PRIVADO) {
+                jTextArea1.append("[Privado para " + destino + "]: " + textoFiltrado + "\n");
+            }
 
             jTextField2.setText("");
-            jTextField2.setForeground(java.awt.Color.BLACK);
-
-        } catch (IllegalArgumentException e) {
-            JOptionPane.showMessageDialog(this, e.getMessage(), "Validacion", JOptionPane.WARNING_MESSAGE);
         } catch (Exception e) {
             JOptionPane.showMessageDialog(this, "Error al enviar: " + e.getMessage());
         }
@@ -205,44 +226,44 @@ public class Pantalla_Cliente extends javax.swing.JFrame {
 
     private void configurarHiloEscucha() {
         Thread hilo = new Thread(() -> {
-        red.ConexionSocket conexion = red.ConexionSocket.getInstancia();
-        try {
-            while (true) {
-                String jsonRecibido = conexion.recibirMensaje();
-                if (jsonRecibido == null) {
-                    break; 
-                }
-                try {
-                    dto.MensajeDTO mensaje = mappers.MensajeMapper.toMensajeDTO(jsonRecibido);
-                    
-                    if (mensaje != null) {
-                        String emisor = mensaje.getEmisor().getNombre();
-                        String contenido = mensaje.getContenido();
+            red.ConexionSocket conexion = red.ConexionSocket.getInstancia();
+            try {
+                while (true) {
+                    String jsonRecibido = conexion.recibirMensaje();
+                    if (jsonRecibido == null) {
+                        break; 
+                    }
+                    try {
+                        dto.MensajeDTO mensaje = mappers.MensajeMapper.toMensajeDTO(jsonRecibido);
 
+                        if (mensaje != null) {
+                            String emisor = mensaje.getEmisor().getNombre();
+                            String contenido = mensaje.getContenido();
+
+                            if (mensaje.getTipo() == dto.Tipo.PRIVADO) {
+                                javax.swing.SwingUtilities.invokeLater(() -> {
+                                    jTextArea1.append("[Privado de " + emisor + "]: " + contenido + "\n");
+                                });
+                            } else {
+                                javax.swing.SwingUtilities.invokeLater(() -> {
+                                    jTextArea1.append("[" + emisor + "]: " + contenido + "\n");
+                                });
+                            }
+                        }
+                    } catch (Exception mapperEx) {
                         javax.swing.SwingUtilities.invokeLater(() -> {
-                            jTextArea1.append("[" + emisor + "]: " + contenido + "\n");
-                            jTextArea1.setCaretPosition(jTextArea1.getDocument().getLength());
-                        });
-                    } else {
-                        String textoPlano = jsonRecibido;
-                        javax.swing.SwingUtilities.invokeLater(() -> {
-                            jTextArea1.append("[Servidor]: " + textoPlano + "\n");
+                            jTextArea1.append("[Raw]: " + jsonRecibido + "\n");
                         });
                     }
-                } catch (Exception mapperEx) {
-                    javax.swing.SwingUtilities.invokeLater(() -> {
-                        jTextArea1.append("[Raw]: " + jsonRecibido + "\n");
-                    });
                 }
+            } catch (Exception e) {
+                javax.swing.SwingUtilities.invokeLater(() -> {
+                    jTextArea1.append("Conexión perdida con el servidor.\n");
+                });
             }
-        } catch (Exception e) {
-            javax.swing.SwingUtilities.invokeLater(() -> {
-                jTextArea1.append("⚠️ Conexión perdida con el servidor.\n");
-            });
-        }
-    });
-    hilo.setDaemon(true); 
-    hilo.start();
+        });
+        hilo.setDaemon(true); 
+        hilo.start();
     }
 
     // Variables declaration - do not modify//GEN-BEGIN:variables

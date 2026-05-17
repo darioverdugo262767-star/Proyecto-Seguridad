@@ -9,10 +9,8 @@ class ChatServer:
         self.host = host
         self.port = port
         
-        # Guardaremos el socket del servidor aquí
         self.sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         
-        # ESTADO GLOBAL: Mapea 'username' -> 'socket del cliente'
         self.users = {} 
         self.lock = threading.Lock()
 
@@ -24,9 +22,7 @@ class ChatServer:
         
         try:
             while True:
-                # Espera una nueva conexión de un cliente (Java o Python)
                 conn, addr = self.sock.accept()
-                # Crea un hilo independiente para atender a ese cliente
                 threading.Thread(target=self.handle_client, args=(conn, addr), daemon=True).start()
         except KeyboardInterrupt:
             print("\nApagando servidor...")
@@ -38,7 +34,6 @@ class ChatServer:
         print(f"[SERVIDOR] Nueva conexión desde {addr}")
         username = None
         try:
-            # 1. Fase de Registro (Primer mensaje que DEBE enviar el cliente)
             raw = self.recv_msg(conn)
             msg = parse_msg(raw)
             
@@ -48,29 +43,30 @@ class ChatServer:
             
             username = msg.get('from')
             
-            # Validaciones de registro
             with self.lock:
-                if len(self.users) >= MAX_CLIENTS:
+                if username != "SERVER_GUI" and len([u for u in self.users if u != "SERVER_GUI"]) >= MAX_CLIENTS:
                     self.send_msg(conn, make_msg('register_ack', text='FULL'))
                     conn.close()
                     return
-                if username in self.users or not username:
+                if username != "SERVER_GUI" and (username in self.users or not username):
                     self.send_msg(conn, make_msg('register_ack', text='NAME_TAKEN'))
                     conn.close()
                     return
                 
-                # Registro exitoso
                 self.users[username] = conn
             
-            # Confirmar registro al cliente y avisar a los demás
             self.send_msg(conn, make_msg('register_ack', sender='server', to=username, text='OK'))
-            self.broadcast(make_msg('message', 'server', 'ALL', f"{username} se ha unido al chat"), exclude=username)
             
-            # 2. Bucle de Mensajes (Chat activo)
+            if username != "SERVER_GUI":
+                self.broadcast(
+                    make_msg('message', username, 'ALL', f"{username} se ha unido al chat"),
+                    exclude=username
+                )
+        
             while True:
                 raw = self.recv_msg(conn)
                 if not raw: 
-                    break # Conexión cerrada por el cliente
+                    break 
                 
                 m = parse_msg(raw)
                 if not m: 
@@ -81,7 +77,6 @@ class ChatServer:
         except Exception as e:
             print(f"[ERROR] Con {username if username else addr}: {e}")
         finally:
-            # 3. Limpieza al desconectar
             if username:
                 with self.lock:
                     if username in self.users:
@@ -90,14 +85,16 @@ class ChatServer:
             conn.close()
             print(f"[SERVIDOR] Conexión cerrada con {username if username else addr}")
 
+
     def process_message(self, m, sender):
         to = m.get('to', 'ALL')
         text = m.get('text', '')
 
-        # 1. CONTROL EXCLUSIVO DEL ADMINISTRADOR (SERVER_GUI)
+        print(f"[CMD TRAFICO] [{sender}] -> [{to}]: {text}")
+
         if sender == "SERVER_GUI":
             if text == "/shutdown":
-                print("\n[!] APAGANDO EL SERVIdOR POR ORDEN DEL ADMINISTRADOR...")
+                print("\n[!] APAGANDO EL SERVIDOR POR ORDEN DEL ADMINISTRADOR...")
                 self.broadcast(make_msg('message', 'server', 'ALL', "El servidor ha sido cerrado por el Administrador."))
                 with self.lock:
                     for c in list(self.users.values()):
@@ -117,22 +114,26 @@ class ChatServer:
                             client_socket.close()
                         except: pass
                         del self.users[target_user]
-                # Avisamos a todos los clientes reales que se fue
                 self.broadcast(make_msg('message', 'server', 'ALL', f"{target_user} se ha desconectado"))
                 return
-            return  # Importante: Evita que los comandos del admin se dispersen como mensajes normales
+            return  
 
-        # 2. RUTA PARA CLIENTES NORMALES (Juan, Sebas, etc.)
-        # Si un cliente normal manda un mensaje, se lo enviamos a todos los clientes MENOS a SERVER_GUI
         with self.lock:
             msg_a_enviar = make_msg('message', sender, to, text)
             for user, conn in self.users.items():
-                if user != "SERVER_GUI":  # <-- AQUÍ ESTÁ EL TRUCO: Protegemos la pantalla del servidor
+                if user != "SERVER_GUI":
                     try:
                         if to == 'ALL' or user == to or user == sender:
-                            self.send_msg(conn, msg_a_enviar)
+                            if sender != "SERVER_GUI":
+                                self.send_msg(conn, msg_a_enviar)
                     except:
                         pass
+                        
+            if "SERVER_GUI" in self.users:
+                try:
+                    self.send_msg(self.users["SERVER_GUI"], msg_a_enviar)
+                except:
+                    pass
 
     def broadcast(self, data_bytes, exclude=None):
         """Envía un mensaje a todos los usuarios conectados."""
@@ -151,7 +152,6 @@ class ChatServer:
             conn = self.users.get(to_user)
 
         if conn is None:
-            # Si el usuario no existe, le avisamos al emisor
             self.send_error(sender, f"El usuario '{to_user}' no está conectado.")
             return
 
@@ -170,22 +170,31 @@ class ChatServer:
             except Exception:
                 pass
 
-    # --- Métodos de transporte TCP integrados para simplificar ---
     def send_msg(self, conn, data: bytes):
-        """Agrega el delimitador \\n requerido para que no se peguen los JSON."""
-        conn.sendall(data + b'\n')
+        """"Asegura que el mensaje sea bytes y termine exactamente con un \n."""
+        if isinstance(data, str):
+            payload = data.encode('utf-8')
+        else:
+            payload = data
+            
+        if not payload.endswith(b'\n'):
+            payload += b'\n'
+        conn.sendall(payload)
 
     def recv_msg(self, conn):
-        """Lee del socket hasta encontrar el salto de línea \\n."""
+        """Lee del socket de forma segura garantizando retornar bytes limpios."""
         data = b''
         while True:
-            part = conn.recv(1024)
-            if not part: 
+            try:
+                part = conn.read(1024) if hasattr(conn, 'read') else conn.recv(1024)
+                if not part: 
+                    return b''
+                data += part
+                if b'\n' in data: 
+                    break
+            except Exception:
                 return b''
-            data += part
-            if b'\n' in part: 
-                break
-        return data.strip()
+        return data 
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()

@@ -206,18 +206,19 @@ public class Pantalla_Servidor extends javax.swing.JFrame {
         int filaSeleccionada = jTable2.getSelectedRow();
     
         if (filaSeleccionada == -1) {
-            JOptionPane.showMessageDialog(this, "Selecciona un usuario de la tabla para desconectarlo.");
+            JOptionPane.showMessageDialog(this, "Por favor, selecciona un usuario de la tabla 'Clientes Conectados'.", "Ningún usuario seleccionado", JOptionPane.WARNING_MESSAGE);
             return;
         }
 
         String usuarioAKick = jTable2.getValueAt(filaSeleccionada, 0).toString();
 
-        int respuesta = JOptionPane.showConfirmDialog(this, "¿Expulsar a " + usuarioAKick + "?", "Confirmar", JOptionPane.YES_NO_OPTION);
+        int respuesta = JOptionPane.showConfirmDialog(this, "¿Estás seguro de que deseas expulsar a '" + usuarioAKick + "'?", "Confirmar expulsión", JOptionPane.YES_NO_OPTION);
         if (respuesta == JOptionPane.YES_OPTION) {
             if (salidaComandos != null) {
                 String jsonComando = "{\"type\":\"message\",\"from\":\"SERVER_GUI\",\"to\":\"ALL\",\"text\":\"/kick " + usuarioAKick + "\",\"timestamp\":\"\"}\n";
                 salidaComandos.print(jsonComando);
                 salidaComandos.flush();
+
                 modeloTabla.removeRow(filaSeleccionada);
             }
         }
@@ -247,61 +248,104 @@ public class Pantalla_Servidor extends javax.swing.JFrame {
     
     private void conectarAlServidorPython() {
         Thread hiloAdmin = new Thread(() -> {
-        try {
-            java.net.Socket socketControl = new java.net.Socket("127.0.0.1", 9009);
-            this.salidaComandos = new java.io.PrintWriter(socketControl.getOutputStream(), true);
-            java.io.BufferedReader entrada = new java.io.BufferedReader(new java.io.InputStreamReader(socketControl.getInputStream()));
+            while (true) {
+                try {
+                    java.net.Socket socketControl = new java.net.Socket("127.0.0.1", 9009);
+                    this.salidaComandos = new java.io.PrintWriter(socketControl.getOutputStream(), true);
+                    java.io.BufferedReader entrada = new java.io.BufferedReader(new java.io.InputStreamReader(socketControl.getInputStream()));
 
-            String jsonRegistroAdmin = "{\"type\":\"register\",\"from\":\"SERVER_GUI\",\"to\":\"ALL\",\"text\":\"Admin\",\"timestamp\":\"\"}\n";
-            salidaComandos.print(jsonRegistroAdmin);
-            salidaComandos.flush();
+                    String jsonRegistroAdmin = "{\"type\":\"register\",\"from\":\"SERVER_GUI\",\"to\":\"ALL\",\"text\":\"Admin\",\"timestamp\":\"\"}\n";
+                    salidaComandos.print(jsonRegistroAdmin);
+                    salidaComandos.flush();
 
-            javax.swing.SwingUtilities.invokeLater(() -> {
-                jLabel2.setText("Estado: Conectado");
-                jLabel2.setForeground(new java.awt.Color(0, 153, 51));
-            });
+                    javax.swing.SwingUtilities.invokeLater(() -> {
+                        jLabel2.setText("Estado: Conectado"); 
+                        jLabel2.setForeground(new java.awt.Color(0, 153, 51));
+                    });
 
-            String jsonRecibido;
-            while ((jsonRecibido = entrada.readLine()) != null) {
-                if (jsonRecibido.contains("se ha unido al chat")) {
-                    String usuario = extraerCampoJson(jsonRecibido, "\"from\":\"");
-                    
-                    if (usuario != null && !usuario.equals("SERVER_GUI") && !usuario.equals("server")) {
-                        javax.swing.SwingUtilities.invokeLater(() -> {
-                            if (!existeUsuarioEnTabla(usuario)) {
-                                modeloTabla.addRow(new Object[]{usuario});
+                    String jsonRecibido;
+                    while ((jsonRecibido = entrada.readLine()) != null) {
+                        try {
+                            final String jsonLimpio = jsonRecibido.trim();
+
+                            if (jsonLimpio.toLowerCase().contains("se ha unido al chat")) {
+                                String usuarioExtraido = extraerCampoJson(jsonLimpio, "\"from\": \"");
+                                if (usuarioExtraido != null) {
+                                    final String usuarioNuevo = usuarioExtraido.trim();
+
+                                    if (!usuarioNuevo.isEmpty() && !usuarioNuevo.equals("SERVER_GUI") && !usuarioNuevo.equals("server")) {
+                                        javax.swing.SwingUtilities.invokeLater(() -> {
+                                            if (!existeUsuarioEnTabla(usuarioNuevo)) {
+                                                modeloTabla.addRow(new Object[]{usuarioNuevo});
+
+                                                modeloTabla.fireTableDataChanged();
+                                                jTable2.revalidate();
+                                                jTable2.repaint();
+                                            }
+                                        });
+                                    }
+                                }
+                                continue;
+                            } 
+
+                            if (jsonLimpio.contains("se ha desconectado")) {
+                                String usuarioSaliente = extraerCampoJson(jsonLimpio, "\"from\":\"");
+                                if (usuarioSaliente == null) {
+                                    usuarioSaliente = extraerCampoJson(jsonLimpio, "\"from\":\"");
+                                }
+                                if (usuarioSaliente == null || usuarioSaliente.equals("server") || usuarioSaliente.equals("SERVER_GUI")) {
+                                    String textContenido = extraerCampoJson(jsonLimpio, "\"text\":\"");
+                                    if (textContenido != null && textContenido.contains(" ")) {
+                                        usuarioSaliente = textContenido.split(" ")[0]; 
+                                    }
+                                }
+
+                                if (usuarioSaliente != null) {
+                                    final String finalUser = usuarioSaliente.trim();
+                                    javax.swing.SwingUtilities.invokeLater(() -> {
+                                        removerUsuarioDeTabla(finalUser);
+
+                                        modeloTabla.fireTableDataChanged();
+                                        jTable2.revalidate();
+                                        jTable2.repaint();
+                                    });
+                                }
+                                continue; 
                             }
-                        });
-                    }
-                } 
-                else if (jsonRecibido.contains("se ha desconectado")) {
-                    String usuario = extraerCampoJson(jsonRecibido, "\"from\":\"");
-                    if (usuario == null || usuario.equals("server")) {
-                        usuario = jsonRecibido.split(" se ha")[0];
-                        if(usuario.contains("\"text\":\"")) {
-                            usuario = usuario.substring(usuario.indexOf("\"text\":\"") + 8);
+
+                            dto.MensajeDTO mensaje = mappers.MensajeMapper.toMensajeDTO(jsonLimpio);
+
+                            if (mensaje != null) {
+                                String emisor = mensaje.getEmisor().getNombre();
+                                String contenido = mensaje.getContenido();
+
+                                javax.swing.SwingUtilities.invokeLater(() -> {
+                                    jTextArea2.append("[" + emisor + "]: " + contenido + "\n");
+                                });
+                            }
+                        } catch (Exception e) {
+                            System.err.println("Error parseando mensaje individual: " + e.getMessage());
                         }
                     }
-                    final String finalUser = usuario;
+                } catch (Exception e) {
                     javax.swing.SwingUtilities.invokeLater(() -> {
-                        removerUsuarioDeTabla(finalUser);
+                        jLabel2.setText("Estado: Desconectado");
+                        jLabel2.setForeground(java.awt.Color.RED);
                     });
                 }
+
+                try { Thread.sleep(3000); } catch (InterruptedException ex) { break; }
             }
-        } catch (Exception e) {
-            javax.swing.SwingUtilities.invokeLater(() -> {
-                jLabel2.setText("Estado: Desconectado");
-                jLabel2.setForeground(java.awt.Color.RED);
-            });
-        }
         });
         hiloAdmin.setDaemon(true);
         hiloAdmin.start();
     }
 
     private boolean existeUsuarioEnTabla(String usuario) {
+        if (usuario == null) return false;
         for (int i = 0; i < modeloTabla.getRowCount(); i++) {
-            if (modeloTabla.getValueAt(i, 0).toString().equals(usuario)) {
+            Object valorCelda = modeloTabla.getValueAt(i, 0);
+            if (valorCelda != null && valorCelda.toString().trim().equals(usuario.trim())) {
                 return true;
             }
         }
@@ -309,8 +353,10 @@ public class Pantalla_Servidor extends javax.swing.JFrame {
     }
 
     private void removerUsuarioDeTabla(String usuario) {
+        if (usuario == null) return;
         for (int i = 0; i < modeloTabla.getRowCount(); i++) {
-            if (modeloTabla.getValueAt(i, 0).toString().equals(usuario)) {
+            Object valorCelda = modeloTabla.getValueAt(i, 0);
+            if (valorCelda != null && valorCelda.toString().trim().equals(usuario.trim())) {
                 modeloTabla.removeRow(i);
                 break;
             }
@@ -318,10 +364,17 @@ public class Pantalla_Servidor extends javax.swing.JFrame {
     }
     
     private String extraerCampoJson(String json, String clave) {
-        if (!json.contains(clave)) return null;
-        int inicio = json.indexOf(clave) + clave.length();
-        int fin = json.indexOf("\"", inicio);
-        return json.substring(inicio, fin);
+        if (json == null || !json.contains(clave)) return null;
+        try {
+            int inicio = json.indexOf(clave) + clave.length();
+            int fin = json.indexOf("\"", inicio);
+            if (fin > inicio) {
+                return json.substring(inicio, fin).trim();
+            }
+        } catch (Exception e) {
+            System.err.println("Error extrayendo campo: " + e.getMessage());
+        }
+        return null;
     }
     
     /**
