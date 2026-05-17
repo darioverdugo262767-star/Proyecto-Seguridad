@@ -33,7 +33,7 @@ public class LoginValidacion {
         //nombres minimo 3 letras 
         //validar caracteres de la contraseña , minimo una letra , un numero y un caracter especial
         // y al menos 8 caracteres
-        if (nombre.trim().length() < 3 || contrasenia.trim().length() < 8 || !contrasenia.matches("(?=.*[a-zA-Z])(?=.*[0-9])(?=.*[!@#$%^&*()_+]).*")) {
+        if (nombre.trim().length() < 3 || !contrasenia.matches("(?=.*[a-zA-Z])(?=.*[0-9])(?=.*[!@#$%^&*()_+]).*")) {
             LOG.warning("Nombre o contraseña inválida");
             return "El usuario debe tener mínimo 3 caracteres "
                     + "y la contraseña debe tener letras, números y un carácter especial";

@@ -11,6 +11,7 @@ public class UsuarioDTO {
     private Rol rol;
 
     public UsuarioDTO(String Nombre, String contrasenia, Rol rol) {
+        this.id = 0L;
         this.Nombre = Nombre;
         this.contrasenia = contrasenia;
         this.rol = rol;

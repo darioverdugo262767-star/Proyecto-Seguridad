@@ -52,8 +52,9 @@ public class UsuarioDAOMock {
             
         }
         String hash = LoginValidacion.hashear(contrasena);
-            usuarios.add(new UsuarioDTO(nombre, hash, Rol.USUARIO));
-            return null;
+        Long nuevoId = (long) (usuarios.size() + 1);
+        usuarios.add(new UsuarioDTO(nuevoId, nombre, hash, Rol.USUARIO)); 
+        return null;
     }
    
 }

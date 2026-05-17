@@ -5,7 +5,6 @@
 package Main;
 
 import daoMock.UsuarioDAOMock;
-import dto.UsuarioDTO;
 import presentacion.Login;
 
 /**
