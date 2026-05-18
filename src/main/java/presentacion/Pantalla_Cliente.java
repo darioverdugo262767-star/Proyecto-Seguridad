@@ -278,7 +278,6 @@ public class Pantalla_Cliente extends javax.swing.JFrame {
                             String emisor = mensaje.getEmisor().getNombre();
                             String contenido = mensaje.getContenido();
                             
-                            // Extraemos la hora
                             String horaFechaFormateada = "";
                             if (mensaje.getFecha() != null) {
                                 horaFechaFormateada = "[" + mensaje.getFecha().format(formateadorCorto) + "] ";
@@ -293,18 +292,15 @@ public class Pantalla_Cliente extends javax.swing.JFrame {
                                 }
                             }
                             
-                            // CREAMOS LA LÍNEA DE TEXTO FINAL DEPENDIENDO DEL TIPO
                             final String prefijoHora = horaFechaFormateada;
                             final String textoAImprimir;
                             
                             if (mensaje.getTipo() == dto.Tipo.PRIVADO) {
                                 textoAImprimir = prefijoHora + "[Privado de " + emisor + "]: " + contenido + "\n";
                             } else {
-                                // ¡Para el chat público también concatenamos el prefijo de la hora obligatoriamente!
                                 textoAImprimir = prefijoHora + "[" + emisor + "]: " + contenido + "\n";
                             }
                             
-                            // Una sola llamada limpia para pintar en la pantalla
                             javax.swing.SwingUtilities.invokeLater(() -> {
                                 jTextArea1.append(textoAImprimir);
                             });

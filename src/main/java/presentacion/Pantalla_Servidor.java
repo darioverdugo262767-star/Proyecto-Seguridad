@@ -250,7 +250,7 @@ public class Pantalla_Servidor extends javax.swing.JFrame {
         Thread hiloAdmin = new Thread(() -> {
             while (true) {
                 try {
-                    java.net.Socket socketControl = new java.net.Socket("127.0.0.1", 9009);
+                    java.net.Socket socketControl = new java.net.Socket("26.179.8.19", 9009);
                     this.salidaComandos = new java.io.PrintWriter(socketControl.getOutputStream(), true);
                     java.io.BufferedReader entrada = new java.io.BufferedReader(new java.io.InputStreamReader(socketControl.getInputStream()));
 

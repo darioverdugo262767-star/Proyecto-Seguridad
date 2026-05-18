@@ -149,21 +149,36 @@ public class Login extends javax.swing.JFrame {
         String nombre = campoNombre.getText();
         String contra = new String(campoContra.getPassword());
 
+        String ipServidor = JOptionPane.showInputDialog(this, 
+                "Introduce la dirección IP del Servidor (o Radmin VPN):", 
+                "Configurar Conexión de Red", 
+                JOptionPane.QUESTION_MESSAGE, 
+                null, 
+                null, 
+                "127.0.0.1").toString();
+
+        if (ipServidor == null || ipServidor.trim().isEmpty()) {
+            JOptionPane.showMessageDialog(this, "Conexión cancelada. No se puede iniciar sesión sin una IP destino.", "Operación Cancelada", JOptionPane.WARNING_MESSAGE);
+            return;
+        }
+
+        final String ipFinal = ipServidor.trim();
+
         try {
             UsuarioDTO usuario = usuarioDAO.validarUsuario(nombre, contra);
             if (usuario == null) {
                 JOptionPane.showMessageDialog(this, "Nombre de usuario o contraseña incorrectos");
             } else {
                 red.ConexionSocket conexion = red.ConexionSocket.getInstancia();
-                boolean conectadoARed = conexion.conectar("127.0.0.1", 9009, usuario.getNombre());
-                
+                boolean conectadoARed = conexion.conectar(ipFinal, 9009, usuario.getNombre());
+
                 if (conectadoARed) {
                     new Pantalla_Cliente(usuario, this.usuarioDAO).setVisible(true);
                     this.dispose();
                 } else {
                     JOptionPane.showMessageDialog(this, 
                         "Éxito local, pero no se pudo conectar al servidor de chat de Python.\n" +
-                        "Verifica que el servidor esté encendido o que el usuario no esté repetido.", 
+                        "Verifica que la IP '" + ipFinal + "' sea correcta, que el servidor esté encendido o que el usuario no esté repetido.", 
                         "Error de Red", 
                         JOptionPane.ERROR_MESSAGE);
                 }
