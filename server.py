@@ -1,6 +1,7 @@
 # server.py
 import threading 
 import socket
+import ssl
 import argparse
 from common import parse_msg, make_msg, MAX_CLIENTS, timestamp
 
@@ -9,16 +10,21 @@ class ChatServer:
         self.host = host
         self.port = port
         
-        self.sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        raw_sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        raw_sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+        
+        context = ssl.SSLContext(ssl.PROTOCOL_TLS_SERVER)
+        context.load_cert_chain(certfile='server.crt', keyfile='server.key')
+        
+        self.sock = context.wrap_socket(raw_sock, server_side=True)
         
         self.users = {} 
         self.lock = threading.Lock()
 
     def start(self):
-        """Arranca el servidor TCP."""
         self.sock.bind((self.host, self.port))
         self.sock.listen(MAX_CLIENTS)
-        print(f"[SERVIDOR] Escuchando en TCP {self.host}:{self.port}")
+        print(f"[SERVIDOR] Escuchando en TCP+SSL {self.host}:{self.port}")
         
         try:
             while True:
@@ -30,7 +36,6 @@ class ChatServer:
             self.sock.close()
 
     def handle_client(self, conn, addr):
-        """Ciclo de vida de un cliente conectado."""
         print(f"[SERVIDOR] Nueva conexión desde {addr}")
         username = None
         try:
@@ -85,7 +90,6 @@ class ChatServer:
             conn.close()
             print(f"[SERVIDOR] Conexión cerrada con {username if username else addr}")
 
-
     def process_message(self, m, sender):
         to = m.get('to', 'ALL')
         text = m.get('text', '')
@@ -136,7 +140,6 @@ class ChatServer:
                     pass
 
     def broadcast(self, data_bytes, exclude=None):
-        """Envía un mensaje a todos los usuarios conectados."""
         with self.lock:
             for user, conn in list(self.users.items()):
                 if user == exclude: 
@@ -147,21 +150,17 @@ class ChatServer:
                     pass
 
     def send_private(self, to_user, data_bytes, sender):
-        """Envía un mensaje privado a un usuario específico."""
         with self.lock:
             conn = self.users.get(to_user)
-
         if conn is None:
             self.send_error(sender, f"El usuario '{to_user}' no está conectado.")
             return
-
         try:
             self.send_msg(conn, data_bytes)
         except Exception:
             pass
         
     def send_error(self, destination, error_text):
-        """Envía un mensaje de error directo a un cliente."""
         with self.lock:
             conn = self.users.get(destination)
         if conn:
@@ -171,18 +170,15 @@ class ChatServer:
                 pass
 
     def send_msg(self, conn, data: bytes):
-        """"Asegura que el mensaje sea bytes y termine exactamente con un \n."""
         if isinstance(data, str):
             payload = data.encode('utf-8')
         else:
             payload = data
-            
         if not payload.endswith(b'\n'):
             payload += b'\n'
         conn.sendall(payload)
 
     def recv_msg(self, conn):
-        """Lee del socket de forma segura garantizando retornar bytes limpios."""
         data = b''
         while True:
             try:
@@ -204,5 +200,4 @@ if __name__ == '__main__':
     
     s = ChatServer(host=args.host, port=args.port)
     s.start()
-
     

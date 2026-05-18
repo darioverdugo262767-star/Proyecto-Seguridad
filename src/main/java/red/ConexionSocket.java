@@ -58,7 +58,7 @@ public class ConexionSocket {
             salida.println(jsonRegistro);
 
             String respuesta = entrada.readLine();
-            if (respuesta != null && respuesta.contains("\"text\": \"OK\"")) {
+            if (respuesta != null && respuesta.contains("OK")) {
                 return true;
             } else {
                 cerrarConexion();

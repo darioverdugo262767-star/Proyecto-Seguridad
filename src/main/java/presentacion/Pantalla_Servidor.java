@@ -1,14 +1,6 @@
 package presentacion;
 
-import java.io.BufferedReader;
 import java.io.PrintWriter;
-import java.net.Socket;
-import java.security.cert.X509Certificate;
-import java.time.format.DateTimeFormatter;
-import javax.net.ssl.SSLContext;
-import javax.net.ssl.SSLSocketFactory;
-import javax.net.ssl.TrustManager;
-import javax.net.ssl.X509TrustManager;
 import javax.swing.JOptionPane;
 
 /**
@@ -256,28 +248,43 @@ public class Pantalla_Servidor extends javax.swing.JFrame {
      * Conecta al backend vía SSL/TLS y procesa los mensajes entrantes en segundo plano.
      */
     private void conectarAlServidorPython() {
+        String ipServidor = javax.swing.JOptionPane.showInputDialog(this, 
+                "Introduce la dirección IP del Servidor (o Radmin VPN):", 
+                "Configurar Conexión Administrador", 
+                javax.swing.JOptionPane.QUESTION_MESSAGE, 
+                null, 
+                null, 
+                "127.0.0.1").toString();
+
+        if (ipServidor == null || ipServidor.trim().isEmpty()) {
+            ipServidor = "127.0.0.1";
+        }
+        
+        final String ipFinal = ipServidor.trim();
+
         Thread hiloAdmin = new Thread(() -> {
             while (true) {
                 try {
-                    TrustManager[] trustAllCerts = new javax.net.ssl.TrustManager[]{
-                        new X509TrustManager() {
-                            public X509Certificate[] getAcceptedIssuers() { return null; }
+                    javax.net.ssl.TrustManager[] trustAllCerts = new javax.net.ssl.TrustManager[]{
+                        new javax.net.ssl.X509TrustManager() {
+                            public java.security.cert.X509Certificate[] getAcceptedIssuers() { return null; }
                             public void checkClientTrusted(java.security.cert.X509Certificate[] certs, String authType) {}
                             public void checkServerTrusted(java.security.cert.X509Certificate[] certs, String authType) {}
                         }
                     };
 
-                    SSLContext sc = javax.net.ssl.SSLContext.getInstance("TLS");
+                    javax.net.ssl.SSLContext sc = javax.net.ssl.SSLContext.getInstance("TLS");
                     sc.init(null, trustAllCerts, new java.security.SecureRandom());
-                    SSLSocketFactory factory = sc.getSocketFactory();
+                    javax.net.ssl.SSLSocketFactory factory = sc.getSocketFactory();
 
-                    Socket socketControl = factory.createSocket("127.0.0.1", 9009);
+                    java.net.Socket socketControl = factory.createSocket(ipFinal, 9009);
                     
                     this.salidaComandos = new java.io.PrintWriter(socketControl.getOutputStream(), true);
-                    BufferedReader entrada = new java.io.BufferedReader(new java.io.InputStreamReader(socketControl.getInputStream()));
+                    java.io.BufferedReader entrada = new java.io.BufferedReader(new java.io.InputStreamReader(socketControl.getInputStream()));
 
-                    String jsonRegistroAdmin = "{\"type\":\"register\",\"from\":\"SERVER_GUI\",\"to\":\"ALL\",\"text\":\"Admin\",\"timestamp\":\"\"}\n";
-                    salidaComandos.print(jsonRegistroAdmin);
+                    // JSON limpio sin '\n' para que println controle el flujo correctamente
+                    String jsonRegistroAdmin = "{\"type\":\"register\",\"from\":\"SERVER_GUI\",\"to\":\"ALL\",\"text\":\"Admin\",\"timestamp\":\"\"}";
+                    salidaComandos.println(jsonRegistroAdmin);
                     salidaComandos.flush();
 
                     javax.swing.SwingUtilities.invokeLater(() -> {
@@ -285,7 +292,7 @@ public class Pantalla_Servidor extends javax.swing.JFrame {
                         jLabel2.setForeground(new java.awt.Color(0, 153, 51));
                     });
 
-                    DateTimeFormatter formateador = java.time.format.DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm:ss");
+                    java.time.format.DateTimeFormatter formateador = java.time.format.DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm:ss");
                     
                     String jsonRecibido;
                     while ((jsonRecibido = entrada.readLine()) != null) {
@@ -363,7 +370,12 @@ public class Pantalla_Servidor extends javax.swing.JFrame {
                     });
                 }
 
-                try { Thread.sleep(3000); } catch (InterruptedException ex) { break; }
+                // Pausa de seguridad antes de reiniciar el bucle y reintentar la conexión
+                try { 
+                    Thread.sleep(3000); 
+                } catch (InterruptedException ex) { 
+                    break; 
+                }
             }
         });
         hiloAdmin.setDaemon(true);

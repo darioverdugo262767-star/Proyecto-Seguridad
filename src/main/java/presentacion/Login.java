@@ -141,7 +141,7 @@ public class Login extends javax.swing.JFrame {
         String contra = new String(campoContra.getPassword());
 
         String ipServidor = JOptionPane.showInputDialog(this, 
-                "Introduce la dirección IP del Servidor (o Radmin VPN):", 
+                "Introduce la dirección IP del Servidor:", 
                 "Configurar Conexión de Red", 
                 JOptionPane.QUESTION_MESSAGE, 
                 null, 
