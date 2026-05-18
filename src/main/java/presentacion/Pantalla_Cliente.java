@@ -5,16 +5,10 @@ import daoMock.UsuarioDAOMock;
 import dto.UsuarioDTO;
 import javax.swing.JOptionPane;
 import java.time.format.DateTimeFormatter;
-
-import java.util.logging.Level;
 import java.util.logging.Logger;
-/*
- * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
- * Click nbfs://nbhost/SystemFileSystem/Templates/GUIForms/JFrame.java to edit this template
- */
 
 /**
- *
+ * Interfaz gráfica del cliente para la sala de chat.
  * @author Ixchel
  */
 public class Pantalla_Cliente extends javax.swing.JFrame {
@@ -24,7 +18,8 @@ public class Pantalla_Cliente extends javax.swing.JFrame {
     private UsuarioDAOMock usuarioDAO;
     
     /**
-     * Creates new form Pantalla_Clientea
+     * Inicializa los componentes, el estado visual del usuario y envía la 
+     * notificación de conexión al servidor.
      */
     public Pantalla_Cliente(UsuarioDTO usuario, UsuarioDAOMock usuarioDAO) {
         initComponents();
@@ -39,23 +34,18 @@ public class Pantalla_Cliente extends javax.swing.JFrame {
 
         try {
             red.ConexionSocket conexion = red.ConexionSocket.getInstancia();
-
             dto.MensajeDTO mensajeRegistro = new dto.MensajeDTO(
                 "Se ha unido al chat", 
                 usuario, 
                 java.time.LocalDateTime.now(), 
                 dto.Tipo.PUBLICO
             );
-
             String jsonRegistro = mappers.MensajeMapper.toPythonJson(mensajeRegistro, "ALL") + "\n";
-
             conexion.enviarMensaje(jsonRegistro);
-
         } catch (Exception e) {
         }
 
         configurarHiloEscucha();
-
         this.revalidate();
         this.repaint();
     }
@@ -198,6 +188,9 @@ public class Pantalla_Cliente extends javax.swing.JFrame {
         // TODO add your handling code here:
     }//GEN-LAST:event_jTextField2ActionPerformed
 
+    /**
+     * Procesa y envía el mensaje escrito. Soporta el comando privado /priv.
+     */
     private void jButton1ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton1ActionPerformed
         String textoOriginal = jTextField2.getText().trim();
     
@@ -247,6 +240,9 @@ public class Pantalla_Cliente extends javax.swing.JFrame {
         }
     }//GEN-LAST:event_jButton1ActionPerformed
 
+    /**
+     * Limpia el marcador de posición (placeholder) del campo de texto al ganar el foco.
+     */
     private void jTextField2FocusGained(java.awt.event.FocusEvent evt) {//GEN-FIRST:event_jTextField2FocusGained
         if (jTextField2.getText().equals("Escribe tu mensaje...")) {
             jTextField2.setText("");
@@ -254,15 +250,22 @@ public class Pantalla_Cliente extends javax.swing.JFrame {
         }
     }//GEN-LAST:event_jTextField2FocusGained
 
+    /**
+     * Cierra la ventana actual y regresa a la pantalla de Login.
+     */
     private void jButton3ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton3ActionPerformed
         new Login(usuarioDAO).setVisible(true);
         this.dispose();
     }//GEN-LAST:event_jButton3ActionPerformed
 
+    /**
+     * Inicia el hilo en segundo plano para escuchar y procesar los mensajes 
+     * entrantes del servidor en tiempo real.
+     */
     private void configurarHiloEscucha() {
         Thread hilo = new Thread(() -> {
             red.ConexionSocket conexion = red.ConexionSocket.getInstancia();
-            java.time.format.DateTimeFormatter formateadorCorto = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm:ss");
+            java.time.format.DateTimeFormatter formateadorCorto = java.time.format.DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm:ss");
             try {
                 while (true) {
                     String jsonRecibido = conexion.recibirMensaje();
@@ -314,6 +317,13 @@ public class Pantalla_Cliente extends javax.swing.JFrame {
             } catch (Exception e) {
                 javax.swing.SwingUtilities.invokeLater(() -> {
                     jTextArea1.append("Conexión perdida con el servidor.\n");
+                });
+            } finally {
+                javax.swing.SwingUtilities.invokeLater(() -> {
+                    jLabel2.setText("Estado: Desconectado");
+                    jLabel2.setForeground(java.awt.Color.RED);
+                    jTextField2.setEnabled(false);
+                    jButton1.setEnabled(false);
                 });
             }
         });

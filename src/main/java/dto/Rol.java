@@ -1,8 +1,7 @@
 package dto;
 
 /**
- *
- * @author Dario
+ * Define los niveles de acceso y privilegios de los integrantes del sistema.
  */
 public enum Rol {
     ADMIN,

@@ -1,8 +1,7 @@
 package dto;
 
 /**
- *
- * @author Dario
+ * Objeto de Transferencia de Datos (DTO) que encapsula la información de un usuario del sistema.
  */
 public class UsuarioDTO {
     private Long id;
@@ -16,6 +15,10 @@ public class UsuarioDTO {
         this.contrasenia = contrasenia;
         this.rol = rol;
     }
+    
+    /**
+     * Crea una instancia de UsuarioDTO con todos sus atributos inicializados.
+     */
     public UsuarioDTO(Long id, String Nombre, String contrasenia, Rol rol) {
         this.id = id;
         this.Nombre = Nombre;

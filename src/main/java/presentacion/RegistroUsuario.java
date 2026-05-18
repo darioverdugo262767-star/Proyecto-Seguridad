@@ -1,34 +1,19 @@
-/*
- * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
- * Click nbfs://nbhost/SystemFileSystem/Templates/GUIForms/JFrame.java to edit this template
- */
 package presentacion;
 
 import daoMock.UsuarioDAOMock;
-import java.io.BufferedReader;
-import java.io.BufferedWriter;
-import java.io.File;
-import java.io.FileReader;
-import java.io.FileWriter;
-import java.io.IOException;
-import java.security.NoSuchAlgorithmException;
 import java.util.logging.Logger;
 import javax.swing.JOptionPane;
-import presentacion.Login;
-import validador.LoginValidacion;
 
 /**
- *
- * @author Jazmin
+ * Ventana de la interfaz gráfica para el registro de nuevos usuarios.
  */
-
 public class RegistroUsuario extends javax.swing.JFrame {
 
     private static final Logger LOG = Logger.getLogger(RegistroUsuario.class.getName());
     private UsuarioDAOMock usuarioDAO;
 
     /**
-     * Creates new form RegistroUsuario
+     * Inicializa los componentes de la interfaz y asigna el DAO de usuarios.
      */
     public RegistroUsuario(UsuarioDAOMock usuarioDAO) {
         initComponents();
@@ -132,11 +117,23 @@ public class RegistroUsuario extends javax.swing.JFrame {
         pack();
     }// </editor-fold>//GEN-END:initComponents
 
+    /**
+     * Procesa el evento de registro, validando los datos e interactuando con el DAO.
+     */
     private void jButton1ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton1ActionPerformed
-
         String nombre = jTextField1.getText();
         String contra = new String(jPasswordField1.getPassword());
 
+        if(nombre.isEmpty() || contra.isEmpty()){
+            JOptionPane.showMessageDialog(this, "El usuario y contraseña no pueden estar vacios", "Error de validacion", JOptionPane.WARNING_MESSAGE);
+            return;
+        }
+        
+        if(nombre.contains(" ")){
+            JOptionPane.showMessageDialog(this, "El nombre de usuario no puede contener espacios.", "Error de validacion", JOptionPane.WARNING_MESSAGE);
+            return;
+        }
+        
         try {
             String error = usuarioDAO.registrarUsuario(nombre, contra);
 
@@ -144,19 +141,20 @@ public class RegistroUsuario extends javax.swing.JFrame {
                 JOptionPane.showMessageDialog(this, error);
                 return;
             }
-            // 3. Si llegamos aquí, el DAO lo guardó perfectamente y solo una vez.
+            
             JOptionPane.showMessageDialog(this, "Usuario registrado con éxito");
 
-            // 4. Regresamos a la pantalla de Login
             new Login(usuarioDAO).setVisible(true);
             this.dispose();
 
         } catch (Exception e) {
             JOptionPane.showMessageDialog(this, e.getMessage());
         }
-    
     }//GEN-LAST:event_jButton1ActionPerformed
 
+    /**
+     * Cierra la ventana actual y redirige a la pantalla de Login.
+     */
     private void jButton2ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton2ActionPerformed
         new Login(usuarioDAO).setVisible(true);
         this.dispose();

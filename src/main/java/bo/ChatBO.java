@@ -6,13 +6,19 @@ import mappers.MensajeMapper;
 import red.ConexionSocket;
 
 /**
- *
- * @author Dario
+ * Componente de lógica de negocio (Business Object) encargado de validar,
+ * filtrar y canalizar el envío de mensajes en la sala de chat.
  */
 public class ChatBO {
     
+    /**
+     * Valida la longitud y contenido del mensaje, aplica el filtro de censura
+     * y gestiona su envío estructurado a través de la conexión por sockets.
+     * * @param mensaje Objeto con la información y emisor del mensaje.
+     * @param usuarioDestino Nombre del destinatario (o "ALL" para públicos).
+     * @throws IllegalArgumentException Si el mensaje está vacío, excede los 250 caracteres o carece de destino privado.
+     */
     public void procesarYEnviarMensaje(MensajeDTO mensaje, String usuarioDestino) throws IllegalArgumentException {
-        
         if (mensaje.getContenido() == null || mensaje.getContenido().trim().isEmpty()) {
             throw new IllegalArgumentException("No puedes enviar un mensaje vacío.");
         }
@@ -22,7 +28,6 @@ public class ChatBO {
         
         FiltroPalabras filtro = FiltroPalabras.getInstancia();
         String textoModificado = filtro.censurarTexto(mensaje.getContenido());
-        
         mensaje.setContenido(textoModificado);
 
         String destinoRed = "ALL"; 

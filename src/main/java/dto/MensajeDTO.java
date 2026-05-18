@@ -3,8 +3,7 @@ package dto;
 import java.time.LocalDateTime;
 
 /**
- *
- * @author Dario
+ * Objeto de Transferencia de Datos (DTO) que representa un mensaje dentro del sistema de chat.
  */
 public class MensajeDTO {
    private String contenido;
@@ -12,6 +11,9 @@ public class MensajeDTO {
    private LocalDateTime fecha;
    private Tipo tipo;
 
+   /**
+    * Crea una instancia de MensajeDTO con todos sus atributos inicializados.
+    */
     public MensajeDTO(String contenido, UsuarioDTO emisor, LocalDateTime fecha, Tipo tipo) {
         this.contenido = contenido;
         this.emisor = emisor;

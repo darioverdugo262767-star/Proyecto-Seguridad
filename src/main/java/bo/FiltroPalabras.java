@@ -7,10 +7,9 @@ import java.util.HashSet;
 import java.util.Set;
 
 /**
- *
- * @author Dario
+ * Filtro encargado de detectar y censurar palabras prohibidas dentro de las cadenas de texto
+ * mediante el uso de un repositorio externo en disco, implementando el patrón Singleton.
  */
-
 public class FiltroPalabras {
     private static FiltroPalabras instancia;
     private final Set<String> repositorioMalasPalabras;
@@ -20,6 +19,9 @@ public class FiltroPalabras {
         cargarRepositorio();
     }
 
+    /**
+     * Obtiene la única instancia del filtro de palabras.
+     */
     public static FiltroPalabras getInstancia() {
         if (instancia == null) {
             instancia = new FiltroPalabras();
@@ -27,6 +29,9 @@ public class FiltroPalabras {
         return instancia;
     }
 
+    /**
+     * Carga el conjunto de palabras prohibidas desde el archivo plano en disco al inicializar la clase.
+     */
     private void cargarRepositorio() {
         String rutaArchivo = "malas_palabras.txt";
         try (BufferedReader br = new BufferedReader(new FileReader(rutaArchivo))) {
@@ -43,6 +48,10 @@ public class FiltroPalabras {
         }
     }
 
+    /**
+     * Analiza el texto ingresado, identifica los términos que pertenecen al repositorio 
+     * y los reemplaza por una cadena de asteriscos equivalente a su longitud original.
+     */
     public String censurarTexto(String textoOriginal) {
         if (textoOriginal == null || textoOriginal.isEmpty()) {
             return textoOriginal;
